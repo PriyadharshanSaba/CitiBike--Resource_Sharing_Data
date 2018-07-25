@@ -126,7 +126,53 @@ y= sub_df.where(sub_df >=mean_duration_s).count()
 #plt.show()
 
 
-#print(sub_df.groupby(['duration_band']).count())
+##plothere
+#plt.hist(sub_df['duration'],  range = (0,75), bins = 16)
+#plt.title('Distribution of Trip Durations for NYC')
+#plt.xlabel('Duration (m)')
+#plt.show()
 
-#df.to_csv('sample_data.csv')
+dawWeek_peak = df[['dweek','bikeid']].groupby(['dweek'],as_index=False).count()
+dayNight_peak = df[['day_night','bikeid']].groupby(['day_night'],as_index=False).count()
 
+day = "Wednesday"   #taken as wednessday as it is viewed to be the busiest day of the week
+time = "evening"    #assumption made
+
+day_df = df[df['dweek'] == day]
+ridesForDay = day_df['bikeid'].count()
+day_df = day_df[day_df['day_night'] == time]
+day_df.groupby(['hour'],as_index=False).count()[['hour','bikeid']]
+busyHour = (day_df['bikeid'].count())*100/ ridesForDay
+
+#--REGRESSION--
+regr = linear_model.LinearRegression()
+
+#x = list(df.groupby(['hour']).count()['bikeid'])
+x = np.array(x)
+x=x.reshape(-1,1)
+
+y = df[df['dweek']==day]
+y = list(y.groupby(['hour']).count()['bikeid'])
+y=np.array(y)
+
+regr.fit(x,y)
+
+x_test = test_df[test_df['dweek']==day]
+x_test = list(x_test.groupby(['hour']).count()['bikeid'])
+x_test = np.array(x_test)
+x_test = x_test.reshape(-1,1)
+
+pred = regr.predict(x_test)
+
+y_test = test_df[test_df['dweek']==day]
+y_test = list(test_df.groupby(['hour']).count()['bikeid'])
+y_test=np.array(y_test)
+
+#plothere
+plt.scatter(x_test,y_test,color='black')
+plt.plot(x_test, pred, color='blue', linewidth=3)
+plt.xticks(())
+plt.yticks(())
+plt.show()
+
+print(regr.coef_)
